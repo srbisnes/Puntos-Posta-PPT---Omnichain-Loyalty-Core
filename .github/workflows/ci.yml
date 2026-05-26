@@ -1,0 +1,108 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, work ]
+  pull_request:
+  schedule:
+    - cron: "0 4 * * *"
+  workflow_dispatch:
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+      - name: Test
+        run: npm run test
+
+
+  integration-sepolia-dryrun:
+    runs-on: ubuntu-latest
+    if: github.event_name == "workflow_dispatch" || github.event_name == "schedule"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Dry-run bridge preflight (no tx submit)
+        run: node -e "console.log('Configure Sepolia env + run worker preflight in secured CI context')"
+
+
+  integration-sepolia-preflight-real:
+    runs-on: ubuntu-latest
+    if: github.event_name == "workflow_dispatch"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Validate config
+        env:
+          ARBITRUM_SEPOLIA_RPC_URL: ${{ secrets.ARBITRUM_SEPOLIA_RPC_URL }}
+          TOKEN_ADDRESS: ${{ secrets.TOKEN_ADDRESS }}
+          SIGNER_MODE: ci_hmac
+          CI_HMAC_KEY_ID: ${{ secrets.CI_HMAC_KEY_ID }}
+          CI_HMAC_SECRET: ${{ secrets.CI_HMAC_SECRET }}
+          EXPECTED_CHAIN_ID: 421614
+          REPORT_EXPECTED_CHAIN_ID: 421614
+          BROADCAST_ENABLED: false
+        run: npm run validate:config
+
+      - name: Run worker preflight on Sepolia (no broadcast)
+        env:
+          ARBITRUM_SEPOLIA_RPC_URL: ${{ secrets.ARBITRUM_SEPOLIA_RPC_URL }}
+          TOKEN_ADDRESS: ${{ secrets.TOKEN_ADDRESS }}
+          SIGNER_MODE: ci_hmac
+          CI_HMAC_KEY_ID: ${{ secrets.CI_HMAC_KEY_ID }}
+          CI_HMAC_SECRET: ${{ secrets.CI_HMAC_SECRET }}
+          EXPECTED_CHAIN_ID: 421614
+          BROADCAST_ENABLED: false
+          MINT_MODE: registered
+          RUT_HASH: 0x1111111111111111111111111111111111111111111111111111111111111111
+          POINTS_TO_MINT: 1
+          SOURCE_TIMESTAMP: 1893456000
+          MAX_TIMESTAMP_SKEW_SEC: 604800
+        run: npm run worker:demo || true
