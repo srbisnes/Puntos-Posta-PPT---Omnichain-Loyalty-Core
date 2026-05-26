@@ -1,0 +1,37 @@
+{
+  "name": "puntos-posta-arbitrum-core",
+  "version": "1.0.0",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "build": "hardhat compile",
+    "test": "hardhat test",
+    "lint": "eslint . --ext .ts",
+    "deploy:arb-sepolia": "hardhat run scripts/deploy.ts --network arbitrumSepolia",
+    "worker:demo": "ts-node src/bridge-worker.ts",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf artifacts cache",
+    "report:reconciliation": "ts-node src/reconciliation-report.ts",
+    "validate:config": "ts-node src/validate-config.ts"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-chai-matchers": "^2.0.8",
+    "@nomicfoundation/hardhat-ethers": "^3.0.8",
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@types/chai": "^4.3.16",
+    "@types/mocha": "^10.0.8",
+    "@types/node": "^22.10.1",
+    "chai": "^4.5.0",
+    "dotenv": "^16.4.7",
+    "eslint": "^9.17.0",
+    "ethers": "^6.13.4",
+    "hardhat": "^2.22.17",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.2",
+    "@eslint/js": "^9.17.0",
+    "typescript-eslint": "^8.19.1"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.1.0"
+  }
+}
